@@ -6,7 +6,15 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.ImageDecoder
+import android.hardware.camera2.CameraCaptureSession
+import android.hardware.camera2.CameraDevice
+import android.hardware.camera2.CaptureRequest
+import android.hardware.camera2.TotalCaptureResult
+import android.hardware.camera2.params.ColorSpaceTransform
+import android.hardware.camera2.params.RggbChannelVector
+import android.hardware.camera2.params.TonemapCurve
 import android.icu.text.SimpleDateFormat
+import android.media.ImageReader
 import android.net.Uri
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
@@ -14,6 +22,7 @@ import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
 import androidx.core.content.FileProvider
 import androidx.core.graphics.scale
@@ -34,6 +43,10 @@ class MainActivity : AppCompatActivity() {
     private val TAG = "MainActivity"
     private val REQUEST_IMAGE_CAPTURE = 1
     private lateinit var currentPhotopath: String
+    private var mCaptureSession: CameraCaptureSession? = null
+    private var mCameraDevice: CameraDevice? = null
+    private var imageReader: ImageReader? = null
+    private var file: File? = null
 
     companion object { init { OpenCVLoader.initDebug() } }
 
@@ -64,7 +77,7 @@ class MainActivity : AppCompatActivity() {
         btn_gogallery.setOnClickListener {
         }
         btn_takepic.setOnClickListener {
-            dispatchTakePictureIntent()
+            takePicture()
         }
     }
 
@@ -108,6 +121,85 @@ class MainActivity : AppCompatActivity() {
             currentPhotopath = absolutePath
         }
     }
+
+    private fun computeTemperature(): RggbChannelVector // use factor to get rggb
+    {
+//            return new RggbChannelVector(0.635f + (0.0208333f * factor), 1.0f, 1.0f, 3.7420394f + (-0.0287829f * factor));
+        return RggbChannelVector(1.5f, 1.0f, 1.0f, 2.5f)
+    }
+
+    private fun transformer(): ColorSpaceTransform {
+        val elementsArray = intArrayOf(1, 1, 0, 1, 0, 1,
+            0, 1, 1, 1, 0, 1,
+            0, 1, 0, 1, 1, 1)
+
+        return ColorSpaceTransform(elementsArray)
+    }
+
+    private fun toneCurve(): TonemapCurve {
+        val curveRed = floatArrayOf(0.0f, 0.0f, 1.0f, 1.0f)
+        val curveGreen = floatArrayOf(0.0f, 0.0f, 1.0f, 1.0f)
+        val curveBlue = floatArrayOf(0.0f, 0.0f, 1.0f, 1.0f)
+
+        return TonemapCurve(curveRed, curveGreen, curveBlue)
+    }
+
+
+    @RequiresApi(Build.VERSION_CODES.P)
+    fun takePicture(): File? {
+        file = createImageFile()
+        try {
+            if (null == mCameraDevice) {
+                // return null;
+            }
+
+            // This is the CaptureRequest.Builder that we use to take a picture.
+            val captureBuilder = mCameraDevice!!.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE)
+            captureBuilder.addTarget(imageReader!!.surface)
+
+            captureBuilder.set(CaptureRequest.CONTROL_MODE, CaptureRequest.CONTROL_MODE_OFF)
+            captureBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_OFF)
+            captureBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_OFF)
+            // white balance part
+            captureBuilder.set(CaptureRequest.CONTROL_AWB_MODE, CaptureRequest.CONTROL_AWB_MODE_OFF) // auto off
+            captureBuilder.set(CaptureRequest.CONTROL_EFFECT_MODE, CaptureRequest.CONTROL_EFFECT_MODE_OFF)
+            captureBuilder.set(CaptureRequest.CONTROL_POST_RAW_SENSITIVITY_BOOST, 100)
+            captureBuilder.set(CaptureRequest.CONTROL_SCENE_MODE, CaptureRequest.CONTROL_SCENE_MODE_DISABLED)
+            captureBuilder.set(CaptureRequest.COLOR_CORRECTION_ABERRATION_MODE, CaptureRequest.COLOR_CORRECTION_ABERRATION_MODE_OFF) // white balance
+            captureBuilder.set(CaptureRequest.COLOR_CORRECTION_MODE, CaptureRequest.COLOR_CORRECTION_MODE_TRANSFORM_MATRIX) // mode set
+            captureBuilder.set(CaptureRequest.COLOR_CORRECTION_GAINS, computeTemperature()) // white balance
+            captureBuilder.set(CaptureRequest.COLOR_CORRECTION_TRANSFORM, transformer()) // white balance
+            // KC
+            captureBuilder.set(CaptureRequest.BLACK_LEVEL_LOCK, false) // white balance
+            captureBuilder.set(CaptureRequest.CONTROL_EFFECT_MODE, CaptureRequest.CONTROL_EFFECT_MODE_OFF)
+            captureBuilder.set(CaptureRequest.DISTORTION_CORRECTION_MODE, CaptureRequest.DISTORTION_CORRECTION_MODE_OFF)
+            captureBuilder.set(CaptureRequest.EDGE_MODE, CaptureRequest.EDGE_MODE_OFF)
+            captureBuilder.set(CaptureRequest.HOT_PIXEL_MODE, CaptureRequest.HOT_PIXEL_MODE_OFF)
+            captureBuilder.set(CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE, CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_OFF)
+            captureBuilder.set(CaptureRequest.NOISE_REDUCTION_MODE, CaptureRequest.NOISE_REDUCTION_MODE_MINIMAL)
+            captureBuilder.set(CaptureRequest.SHADING_MODE, CaptureRequest.SHADING_MODE_OFF)
+            captureBuilder.set(CaptureRequest.STATISTICS_FACE_DETECT_MODE, CaptureRequest.STATISTICS_FACE_DETECT_MODE_OFF)
+            captureBuilder.set(CaptureRequest.TONEMAP_MODE, CaptureRequest.TONEMAP_MODE_CONTRAST_CURVE)
+            captureBuilder.set(CaptureRequest.TONEMAP_CURVE,toneCurve())
+            // exposure part
+            captureBuilder.set(CaptureRequest.SENSOR_SENSITIVITY, 695) // 695, 300:a50
+            captureBuilder.set(CaptureRequest.SENSOR_EXPOSURE_TIME, 1000)
+            captureBuilder.set(CaptureRequest.JPEG_QUALITY, 100.toByte())
+
+            val CaptureCallback: CameraCaptureSession.CaptureCallback = object : CameraCaptureSession.CaptureCallback() {
+                override fun onCaptureCompleted(session: CameraCaptureSession, request: CaptureRequest, result: TotalCaptureResult) {
+                    Log.e("CAPTURED", "captured")
+//                    Log.e("RESULT", result.partialResults[0].toString() + "")
+                }
+            }
+            mCaptureSession!!.stopRepeating()
+            mCaptureSession!!.capture(captureBuilder.build(), CaptureCallback, null)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        return file
+    }
+
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
