@@ -7,15 +7,20 @@ import android.graphics.Paint
 import android.graphics.PixelFormat
 import android.graphics.PorterDuff
 import android.hardware.Camera
+import android.hardware.camera2.CameraCharacteristics
+import android.hardware.camera2.CameraDevice
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.view.*
 import android.widget.Toast
+import com.yujinchoi.fpma.camera.CameraController
 import kotlinx.android.synthetic.main.activity_camera.*
+import java.io.File
 import kotlin.math.sqrt
 
 class CameraActivity : AppCompatActivity() {
+    lateinit var cameraController : CameraController
     private var previewHolder: SurfaceHolder? = null
     private var gridHolder: SurfaceHolder? = null
     private var camera: Camera? = null
@@ -25,6 +30,8 @@ class CameraActivity : AppCompatActivity() {
     private var mDist = 0f
     private val mZoomSpeed = 2f // 1 is too slow
     private var gridflag = false
+    private var firstFileToScan: String? = null // 0th file name, for passing
+    private var count = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -146,6 +153,8 @@ class CameraActivity : AppCompatActivity() {
         super.onResume()
 
         // front facing camera
+        //initCamera()
+        cameraController = CameraController(applicationContext)
         for (i in 0 until Camera.getNumberOfCameras()) {
             val info = Camera.CameraInfo()
             Camera.getCameraInfo(i, info)
@@ -157,6 +166,13 @@ class CameraActivity : AppCompatActivity() {
         camera = Camera.open(CAM_ID)
         setCameraDisplayOrientation(camera)
         startPreview()
+    }
+
+    private fun initCamera(){
+        // initialize camera
+        cameraController = CameraController(applicationContext)
+        cameraController.openCamera()
+        Log.d("picture # to be taken", "init camera")
     }
 
     private fun setCameraDisplayOrientation(mCamera: Camera?) {
@@ -275,6 +291,16 @@ class CameraActivity : AppCompatActivity() {
     }
 
     private fun goToNextActivity() {
+        val exposureTime_var = 1.toLong()
+        val file: File = cameraController.takePicture(count, exposureTime_var)!!
+        val fName = file.absolutePath
+
+        // select 0th file for scanning
+        val endString = fName.substring(fName.length - 8)
+        val compString = "_000.jpg"
+        if (endString == compString) firstFileToScan = fName // scan only 0th file
+        Log.d("file path", file.absolutePath)
+        count++
 //        val intent = Intent(applicationContext, CaptureOptionActivity::class.java)
 //        startActivity(intent)
 //        overridePendingTransition(0, R.anim.fade_out)

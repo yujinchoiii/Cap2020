@@ -49,52 +49,52 @@ class CameraController (private val context: Context){
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
             return
         }
-        setUpCameraOutputs()
-        val manager = context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
-        try {
-            if (!mCameraOpenCloseLock.tryAcquire(2500, TimeUnit.MILLISECONDS)) {
-                throw RuntimeException("Time out waiting to lock camera opening.")
-            }
-            startBackgroundThread()
-            Log.e(TAG, "THREAD STARTED!")
-            manager.openCamera(mCameraId!!, mStateCallback, backgroundHandler)
-        } catch (e: CameraAccessException) {
-            e.printStackTrace()
-        } catch (e: InterruptedException) {
-            throw RuntimeException("Interrupted while trying to lock camera opening.", e)
-        }
+//        setUpCameraOutputs()
+//        val manager = context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
+//        try {
+//            if (!mCameraOpenCloseLock.tryAcquire(2500, TimeUnit.MILLISECONDS)) {
+//                throw RuntimeException("Time out waiting to lock camera opening.")
+//            }
+//            startBackgroundThread()
+//            Log.e(TAG, "THREAD STARTED!")
+//            manager.openCamera(mCameraId!!, mStateCallback, backgroundHandler)
+//        } catch (e: CameraAccessException) {
+//            e.printStackTrace()
+//        } catch (e: InterruptedException) {
+//            throw RuntimeException("Interrupted while trying to lock camera opening.", e)
+//        }
     }
 
-    private fun setUpCameraOutputs() {
-        val manager = context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
-        try {
-            for (cameraId in manager.cameraIdList) {
-                val characteristics = manager.getCameraCharacteristics(cameraId)
-
-                // front camera setting
-                val facing = characteristics.get(CameraCharacteristics.LENS_FACING)
-                if (facing != null && facing == CameraCharacteristics.LENS_FACING_BACK) {
-                    continue
-                }
-                val map = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)
-                    ?: continue
-
-                // For still image captures, we use the largest available size.
-                val largest = Collections.max(Arrays.asList(*map.getOutputSizes(ImageFormat.JPEG)), CompareSizesByArea())
-                imageReader = ImageReader.newInstance(largest.width, largest.height, ImageFormat.JPEG,  /*maxImages*/2)
-                imageReader!!.setOnImageAvailableListener(mOnImageAvailableListener, backgroundHandler)
-                Log.d("image available listener made", "made!")
-                mCameraId = cameraId
-                return
-            }
-        } catch (e: CameraAccessException) {
-            e.printStackTrace()
-        } catch (e: NullPointerException) {
-            // Currently an NPE is thrown when the Camera2API is used but not supported on the
-            // device this code runs.
-            e.printStackTrace()
-        }
-    }
+//    private fun setUpCameraOutputs() {
+//        val manager = context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
+//        try {
+//            for (cameraId in manager.cameraIdList) {
+//                val characteristics = manager.getCameraCharacteristics(cameraId)
+//
+//                // front camera setting
+//                val facing = characteristics.get(CameraCharacteristics.LENS_FACING)
+//                if (facing != null && facing == CameraCharacteristics.LENS_FACING_BACK) {
+//                    continue
+//                }
+//                val map = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)
+//                    ?: continue
+//
+//                // For still image captures, we use the largest available size.
+//                val largest = Collections.max(Arrays.asList(*map.getOutputSizes(ImageFormat.JPEG)), CompareSizesByArea())
+//                imageReader = ImageReader.newInstance(largest.width, largest.height, ImageFormat.JPEG,  /*maxImages*/2)
+//                imageReader!!.setOnImageAvailableListener(mOnImageAvailableListener, backgroundHandler)
+//                Log.d("image available listener made", "made!")
+//                mCameraId = cameraId
+//                return
+//            }
+//        } catch (e: CameraAccessException) {
+//            e.printStackTrace()
+//        } catch (e: NullPointerException) {
+//            // Currently an NPE is thrown when the Camera2API is used but not supported on the
+//            // device this code runs.
+//            e.printStackTrace()
+//        }
+//    }
 
     private fun computeTemperature(): RggbChannelVector // use factor to get rggb
     {
