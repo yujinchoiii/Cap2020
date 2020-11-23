@@ -4,20 +4,28 @@ import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.ImageFormat
+import android.hardware.Camera
 import android.hardware.camera2.*
 import android.hardware.camera2.params.ColorSpaceTransform
 import android.hardware.camera2.params.RggbChannelVector
 import android.hardware.camera2.params.TonemapCurve
+import android.media.AudioManager
+import android.media.Image
 import android.media.ImageReader
+import android.media.ToneGenerator
 import android.os.Build
 import android.os.Environment
 import android.os.Handler
 import android.os.HandlerThread
 import android.util.Log
 import android.util.Size
+import android.view.Surface
+import android.view.WindowManager
 import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
 import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.Semaphore
@@ -45,56 +53,206 @@ class CameraController (private val context: Context){
         }
     }
 
-    fun openCamera() {
-        if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-            return
+    private val mStateCallback: CameraDevice.StateCallback = object : CameraDevice.StateCallback() {
+        override fun onOpened(cameraDevice: CameraDevice) {
+            // This method is called when the camera is opened.  We start camera preview here.
+            mCameraOpenCloseLock.release()
+            mCameraDevice = cameraDevice
+            createCameraCaptureSession()
         }
-//        setUpCameraOutputs()
-//        val manager = context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
-//        try {
-//            if (!mCameraOpenCloseLock.tryAcquire(2500, TimeUnit.MILLISECONDS)) {
-//                throw RuntimeException("Time out waiting to lock camera opening.")
-//            }
-//            startBackgroundThread()
-//            Log.e(TAG, "THREAD STARTED!")
-//            manager.openCamera(mCameraId!!, mStateCallback, backgroundHandler)
-//        } catch (e: CameraAccessException) {
-//            e.printStackTrace()
-//        } catch (e: InterruptedException) {
-//            throw RuntimeException("Interrupted while trying to lock camera opening.", e)
-//        }
+
+        override fun onDisconnected(cameraDevice: CameraDevice) {
+            mCameraOpenCloseLock.release()
+            cameraDevice.close()
+            mCameraDevice = null
+        }
+
+        override fun onError(cameraDevice: CameraDevice, error: Int) {
+            mCameraOpenCloseLock.release()
+            cameraDevice.close()
+            mCameraDevice = null
+        }
     }
 
-//    private fun setUpCameraOutputs() {
-//        val manager = context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
-//        try {
-//            for (cameraId in manager.cameraIdList) {
-//                val characteristics = manager.getCameraCharacteristics(cameraId)
-//
-//                // front camera setting
-//                val facing = characteristics.get(CameraCharacteristics.LENS_FACING)
-//                if (facing != null && facing == CameraCharacteristics.LENS_FACING_BACK) {
-//                    continue
-//                }
-//                val map = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)
-//                    ?: continue
-//
-//                // For still image captures, we use the largest available size.
-//                val largest = Collections.max(Arrays.asList(*map.getOutputSizes(ImageFormat.JPEG)), CompareSizesByArea())
-//                imageReader = ImageReader.newInstance(largest.width, largest.height, ImageFormat.JPEG,  /*maxImages*/2)
+    private fun createCameraCaptureSession() {
+        try {
+
+            // Here, we create a CameraCaptureSession for camera preview.
+            mCameraDevice!!.createCaptureSession(Arrays.asList(imageReader!!.surface),
+                object : CameraCaptureSession.StateCallback() {
+                    override fun onConfigured(cameraCaptureSession: CameraCaptureSession) {
+                        // The camera is already closed
+                        if (null == mCameraDevice) {
+                            return
+                        }
+
+                        // When the session is ready, we start displaying the preview.
+                        mCaptureSession = cameraCaptureSession
+                    }
+
+                    override fun onConfigureFailed(cameraCaptureSession: CameraCaptureSession) {
+                        Log.d(TAG, "Configuration Failed")
+                    }
+                }, null
+            )
+        } catch (e: CameraAccessException) {
+            e.printStackTrace()
+        }
+    }
+
+    fun openCamera() : Int?{
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+            return null
+        }
+        setUpCameraOutputs()
+        val manager = context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
+        try {
+            if (!mCameraOpenCloseLock.tryAcquire(2500, TimeUnit.MILLISECONDS)) {
+                throw RuntimeException("Time out waiting to lock camera opening.")
+            }
+            startBackgroundThread()
+            Log.e(TAG, "THREAD STARTED!")
+            manager.openCamera(mCameraId!!, mStateCallback, backgroundHandler)
+        } catch (e: CameraAccessException) {
+            e.printStackTrace()
+        } catch (e: InterruptedException) {
+            throw RuntimeException("Interrupted while trying to lock camera opening.", e)
+        }
+        return mCameraId?.toInt()
+    }
+
+    private fun setUpCameraOutputs() {
+        val manager = context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
+        try {
+            for (cameraId in manager.cameraIdList) {
+                val characteristics = manager.getCameraCharacteristics(cameraId)
+
+                // front camera setting
+                val facing = characteristics.get(CameraCharacteristics.LENS_FACING)
+                if (facing != null && facing == CameraCharacteristics.LENS_FACING_BACK) {
+                    continue
+                }
+                val map = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)
+                    ?: continue
+
+                // For still image captures, we use the largest available size.
+                val largest = Collections.max(Arrays.asList(*map.getOutputSizes(ImageFormat.JPEG)), CompareSizesByArea())
+                imageReader = ImageReader.newInstance(largest.width, largest.height, ImageFormat.JPEG,  /*maxImages*/2)
 //                imageReader!!.setOnImageAvailableListener(mOnImageAvailableListener, backgroundHandler)
-//                Log.d("image available listener made", "made!")
-//                mCameraId = cameraId
-//                return
+                Log.d("image available listener made", "made!")
+                mCameraId = cameraId
+                return
+            }
+        } catch (e: CameraAccessException) {
+            e.printStackTrace()
+        } catch (e: NullPointerException) {
+            // Currently an NPE is thrown when the Camera2API is used but not supported on the
+            // device this code runs.
+            e.printStackTrace()
+        }
+    }
+
+//    private val mOnImageAvailableListener: ImageReader.OnImageAvailableListener = object : ImageReader.OnImageAvailableListener {
+//        private var curImgCnt = 0
+//        override fun onImageAvailable(reader: ImageReader) {
+//            // test beep
+//            val toneGen1 = ToneGenerator(AudioManager.STREAM_MUSIC, 50)
+//            toneGen1.startTone(ToneGenerator.TONE_CDMA_PIP, 20)
+//            Log.d(TAG, "ImageAvailable")
+//            //startBackgroundThread();
+//            Log.d("current image count", (curImgCnt + 1).toString() + "/" + imgCnt.toString())
+//            Log.d("available save file", file!!.name)
+//            try {
+//                backgroundHandler!!.post(ImageSaver(reader.acquireNextImage(), file))
+//                //Thread.sleep(500);// take picture
+//            } catch (e: Exception) {
+//                e.printStackTrace()
 //            }
-//        } catch (e: CameraAccessException) {
-//            e.printStackTrace()
-//        } catch (e: NullPointerException) {
-//            // Currently an NPE is thrown when the Camera2API is used but not supported on the
-//            // device this code runs.
-//            e.printStackTrace()
+//            //stopBackgroundThread();
+//            curImgCnt++
+//            if (curImgCnt == imgCnt) {
+//                Log.d(TAG, "Image count reached")
+//                try {
+//                    Thread.sleep(3000) // wait for last image to be saved
+//                } catch (e: Exception) {
+//                    e.printStackTrace()
+//                }
+//                stopBackgroundThread()
+//            }
 //        }
 //    }
+
+    private class ImageSaver(
+        /**
+         * The JPEG image
+         */
+        private val mImage: Image,
+        /**
+         * The file we save the image into.
+         */
+        private val mFile: File?) : Runnable {
+
+        override fun run() {
+            val buffer = mImage.planes[0].buffer
+            val bytes = ByteArray(buffer.remaining())
+
+            // 가로채서 서버로 보내는 코드
+            buffer[bytes]
+            mImage.close()
+
+            // 저장
+            try {
+                // file
+                val output = FileOutputStream(mFile!!)
+                output.write(bytes)
+                output.close()
+            } catch (e: IOException) {
+                e.printStackTrace()
+            }
+        }
+
+    }
+
+    fun closeCamera() {
+        try {
+            mCameraOpenCloseLock.acquire()
+            if (null != mCaptureSession) {
+                mCaptureSession!!.close()
+                mCaptureSession = null
+            }
+            if (null != mCameraDevice) {
+                mCameraDevice!!.close()
+                mCameraDevice = null
+            }
+            if (null != imageReader) {
+                imageReader!!.close()
+                imageReader = null
+            }
+        } catch (e: InterruptedException) {
+            throw RuntimeException("Interrupted while trying to lock camera closing.", e)
+        } finally {
+            mCameraOpenCloseLock.release()
+        }
+    }
+
+    private fun startBackgroundThread() {
+        backgroundThread = HandlerThread("CameraBackground")
+        backgroundThread!!.start()
+        backgroundHandler = Handler(backgroundThread!!.looper)
+    }
+
+    private fun stopBackgroundThread() {
+        //try{Thread.sleep(100000);}catch(Exception e){e.printStackTrace();}
+        backgroundThread!!.quitSafely()
+        try {
+            backgroundThread!!.join()
+            backgroundThread = null
+            backgroundHandler = null
+            Log.e(TAG, "CLOSED!")
+        } catch (e: InterruptedException) {
+            e.printStackTrace()
+        }
+    }
 
     private fun computeTemperature(): RggbChannelVector // use factor to get rggb
     {

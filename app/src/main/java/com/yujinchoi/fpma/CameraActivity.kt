@@ -9,6 +9,7 @@ import android.graphics.PorterDuff
 import android.hardware.Camera
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraDevice
+import android.hardware.camera2.CameraManager
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
@@ -153,50 +154,29 @@ class CameraActivity : AppCompatActivity() {
         super.onResume()
 
         // front facing camera
-        //initCamera()
-        cameraController = CameraController(applicationContext)
-        for (i in 0 until Camera.getNumberOfCameras()) {
-            val info = Camera.CameraInfo()
-            Camera.getCameraInfo(i, info)
-            if (info.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
-                CAM_ID = i
-                break
-            }
-        }
-        camera = Camera.open(CAM_ID)
-        setCameraDisplayOrientation(camera)
-        startPreview()
+        initCamera()
+//        for (i in 0 until Camera.getNumberOfCameras()) {
+//            val info = Camera.CameraInfo()
+//            Camera.getCameraInfo(i, info)
+//            if (info.facing == Camera.CameraInfo.CAMERA_FACING_BACK) {
+//                CAM_ID = i
+//                break
+//            }
+//        }
+//        cameraController = CameraController(applicationContext)
+//        cameraController.openCamera()
     }
 
     private fun initCamera(){
         // initialize camera
+     //   val manager = applicationContext.getSystemService(Context.CAMERA_SERVICE) as CameraManager
         cameraController = CameraController(applicationContext)
-        cameraController.openCamera()
+        cameraController.openCamera()?.let {
+            camera = Camera.open(it)
+            setCameraDisplayOrientation(camera)
+            startPreview()
+        }
         Log.d("picture # to be taken", "init camera")
-    }
-
-    private fun setCameraDisplayOrientation(mCamera: Camera?) {
-        if (mCamera == null) return
-        val info = Camera.CameraInfo()
-        Camera.getCameraInfo(CAM_ID, info)
-        val winManager = applicationContext.getSystemService(Context.WINDOW_SERVICE) as WindowManager
-        val rotation = winManager.defaultDisplay.rotation
-        var degrees = 0
-        when (rotation) {
-            Surface.ROTATION_0 -> degrees = 0
-            Surface.ROTATION_90 -> degrees = 90
-            Surface.ROTATION_180 -> degrees = 180
-            Surface.ROTATION_270 -> degrees = 270
-        }
-        var result: Int
-        if (info.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
-            //Log.d("facing", "FACING FRONT")
-            result = (info.orientation + degrees) % 360
-            result = (360 - result) % 360 // compensate the mirror
-        } else {  // back-facing
-            result = (info.orientation - degrees + 360) % 360
-        }
-        mCamera.setDisplayOrientation(result)
     }
 
     public override fun onPause() {
@@ -207,6 +187,30 @@ class CameraActivity : AppCompatActivity() {
         camera = null
         inPreview = false
         super.onPause()
+    }
+
+    private fun setCameraDisplayOrientation(mCamera: Camera?) {
+        if (mCamera == null) return
+        val info = Camera.CameraInfo()
+        Camera.getCameraInfo(CAM_ID, info)//assertion 주
+        val winManager = applicationContext.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+        val rotation = winManager.defaultDisplay.rotation
+        var degrees = 0
+        when (rotation) {
+            Surface.ROTATION_0 -> degrees = 0
+            Surface.ROTATION_90 -> degrees = 90
+            Surface.ROTATION_180 -> degrees = 180
+            Surface.ROTATION_270 -> degrees = 270
+        }
+        var result: Int
+        if (info.facing == Camera.CameraInfo.CAMERA_FACING_BACK) {
+            //Log.d("facing", "FACING FRONT")
+            result = (info.orientation + degrees) % 360
+            result = (360 - result) % 360 // compensate the mirror
+        } else {  // back-facing
+            result = (info.orientation - degrees + 360) % 360
+        }
+        mCamera.setDisplayOrientation(result)
     }
 
     private fun getBestPreviewSize(width: Int, height: Int,
