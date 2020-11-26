@@ -31,6 +31,7 @@ class CameraActivity : AppCompatActivity() {
     private var gridflag = false
     private var firstFileToScan: String? = null // 0th file name, for passing
     private var count = 0
+    private var exposure_time = 400
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -168,7 +169,7 @@ class CameraActivity : AppCompatActivity() {
     private fun initCamera(){
         // initialize camera
      //   val manager = applicationContext.getSystemService(Context.CAMERA_SERVICE) as CameraManager
- //       exposure_time = intent.getSerializableExtra("exposure_time")
+        exposure_time = intent.getSerializableExtra("exposure_time") as Int
         cameraController = CameraController(applicationContext, count)
         cameraController.openCamera()?.let {
 //            camera = Camera.open(it)
@@ -295,8 +296,7 @@ class CameraActivity : AppCompatActivity() {
     }
 
     private fun captureImage() {
-        val exposureTime_var = 400.toLong()
-        val file: File = cameraController.takePicture(count, exposureTime_var)!!
+        val file: File = cameraController.takePicture(count, exposure_time.toLong())!!
         count++
         Log.d("file path", "${file.absolutePath} and file info is $file")
         val fName = file.absolutePath
