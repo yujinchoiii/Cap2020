@@ -7,9 +7,7 @@ import android.graphics.Paint
 import android.graphics.PixelFormat
 import android.graphics.PorterDuff
 import android.hardware.Camera
-import android.hardware.camera2.CameraCharacteristics
-import android.hardware.camera2.CameraDevice
-import android.hardware.camera2.CameraManager
+import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
@@ -144,7 +142,7 @@ class CameraActivity : AppCompatActivity() {
             }
         })
 
-        confirm_button.setOnClickListener{ goToNextActivity() }
+        confirm_button.setOnClickListener{ captureImage() }
         zoom_in_button.setOnClickListener{ zoomIn() }
         zoom_out_button.setOnClickListener{ zoomOut() }
         back_button.setOnClickListener{ finish() }
@@ -170,22 +168,24 @@ class CameraActivity : AppCompatActivity() {
     private fun initCamera(){
         // initialize camera
      //   val manager = applicationContext.getSystemService(Context.CAMERA_SERVICE) as CameraManager
-        cameraController = CameraController(applicationContext)
+ //       exposure_time = intent.getSerializableExtra("exposure_time")
+        cameraController = CameraController(applicationContext, count)
         cameraController.openCamera()?.let {
-            camera = Camera.open(it)
-            setCameraDisplayOrientation(camera)
-            startPreview()
+//            camera = Camera.open(it)
+//            setCameraDisplayOrientation(camera)
+//            startPreview()
         }
         Log.d("picture # to be taken", "init camera")
     }
 
     public override fun onPause() {
-        if (inPreview) {
-            camera!!.stopPreview()
-        }
-        camera!!.release()
-        camera = null
-        inPreview = false
+//        if (inPreview) {
+//            camera!!.stopPreview()
+//        }
+//        camera
+//        camera!!.release()
+//        camera = null
+//        inPreview = false
         super.onPause()
     }
 
@@ -294,17 +294,22 @@ class CameraActivity : AppCompatActivity() {
         }
     }
 
-    private fun goToNextActivity() {
-        val exposureTime_var = 1.toLong()
+    private fun captureImage() {
+        val exposureTime_var = 400.toLong()
         val file: File = cameraController.takePicture(count, exposureTime_var)!!
+        count++
+        Log.d("file path", "${file.absolutePath} and file info is $file")
         val fName = file.absolutePath
 
+//        val mediaScanIntent = Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(file))
+//        mediaScanIntent.data = Uri.fromFile(file)
+//        sendBroadcast(mediaScanIntent)
+
         // select 0th file for scanning
-        val endString = fName.substring(fName.length - 8)
-        val compString = "_000.jpg"
-        if (endString == compString) firstFileToScan = fName // scan only 0th file
-        Log.d("file path", file.absolutePath)
-        count++
+//        val endString = fName.substring(fName.length - 8)
+//        val compString = "_000.jpg"
+//        if (endString == compString) firstFileToScan = fName // scan only 0th file
+//        Log.d("file path", file.absolutePath)
 //        val intent = Intent(applicationContext, CaptureOptionActivity::class.java)
 //        startActivity(intent)
 //        overridePendingTransition(0, R.anim.fade_out)

@@ -43,6 +43,7 @@ class MainActivity : AppCompatActivity() {
     private val TAG = "MainActivity"
     private val REQUEST_IMAGE_CAPTURE = 1
     private lateinit var currentPhotopath: String
+    var exposure_time = 400
 
     companion object { init { OpenCVLoader.initDebug() } }
 
@@ -73,7 +74,11 @@ class MainActivity : AppCompatActivity() {
         btn_gogallery.setOnClickListener {
         }
         btn_takepic.setOnClickListener {
+            if (editText_exp.text.isNotEmpty()) {
+                exposure_time = editText_exp.text.toString().toInt()
+            }
             val intent = Intent(applicationContext, CameraActivity::class.java)
+            intent.putExtra("exposure_time", exposure_time)
             startActivity(intent)
             finish()
         }

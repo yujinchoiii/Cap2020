@@ -32,7 +32,7 @@ import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
 
 @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-class CameraController (private val context: Context){
+class CameraController (private val context: Context, private val imgCnt: Int){
     private val TAG = "CameraController"
     private var mCameraId: String? = null
     private var mCaptureSession: CameraCaptureSession? = null
@@ -42,7 +42,7 @@ class CameraController (private val context: Context){
     private var imageReader: ImageReader? = null
     private var file: File? = null
 
-    private val exposure: Long = 0
+    private val exposure: Long = 1
     private var timeStamp: String? = null
     private val mCameraOpenCloseLock = Semaphore(1)
 
@@ -129,7 +129,7 @@ class CameraController (private val context: Context){
 
                 // front camera setting
                 val facing = characteristics.get(CameraCharacteristics.LENS_FACING)
-                if (facing != null && facing == CameraCharacteristics.LENS_FACING_BACK) {
+                if (facing != null && facing == CameraCharacteristics.LENS_FACING_FRONT) {
                     continue
                 }
                 val map = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)
@@ -138,7 +138,7 @@ class CameraController (private val context: Context){
                 // For still image captures, we use the largest available size.
                 val largest = Collections.max(Arrays.asList(*map.getOutputSizes(ImageFormat.JPEG)), CompareSizesByArea())
                 imageReader = ImageReader.newInstance(largest.width, largest.height, ImageFormat.JPEG,  /*maxImages*/2)
-//                imageReader!!.setOnImageAvailableListener(mOnImageAvailableListener, backgroundHandler)
+                imageReader!!.setOnImageAvailableListener(mOnImageAvailableListener, backgroundHandler)
                 Log.d("image available listener made", "made!")
                 mCameraId = cameraId
                 return
@@ -152,24 +152,27 @@ class CameraController (private val context: Context){
         }
     }
 
-//    private val mOnImageAvailableListener: ImageReader.OnImageAvailableListener = object : ImageReader.OnImageAvailableListener {
-//        private var curImgCnt = 0
-//        override fun onImageAvailable(reader: ImageReader) {
-//            // test beep
-//            val toneGen1 = ToneGenerator(AudioManager.STREAM_MUSIC, 50)
-//            toneGen1.startTone(ToneGenerator.TONE_CDMA_PIP, 20)
-//            Log.d(TAG, "ImageAvailable")
-//            //startBackgroundThread();
-//            Log.d("current image count", (curImgCnt + 1).toString() + "/" + imgCnt.toString())
-//            Log.d("available save file", file!!.name)
-//            try {
-//                backgroundHandler!!.post(ImageSaver(reader.acquireNextImage(), file))
-//                //Thread.sleep(500);// take picture
-//            } catch (e: Exception) {
-//                e.printStackTrace()
-//            }
-//            //stopBackgroundThread();
-//            curImgCnt++
+    private val mOnImageAvailableListener: ImageReader.OnImageAvailableListener = object : ImageReader.OnImageAvailableListener {
+        private var curImgCnt = 0
+        override fun onImageAvailable(reader: ImageReader) {
+            // test beep
+            val toneGen1 = ToneGenerator(AudioManager.STREAM_MUSIC, 50)
+            toneGen1.startTone(ToneGenerator.TONE_CDMA_PIP, 20)
+            Log.d(TAG, "ImageAvailable")
+            //startBackgroundThread();
+            Log.d("available save file", file!!.name)
+            try {
+                backgroundHandler!!.post(ImageSaver(reader.acquireNextImage(), file))
+                Thread.sleep(500)// take picture
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+            try {
+                Thread.sleep(3000) // wait for last image to be saved
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+            //stopBackgroundThread();
 //            if (curImgCnt == imgCnt) {
 //                Log.d(TAG, "Image count reached")
 //                try {
@@ -179,8 +182,8 @@ class CameraController (private val context: Context){
 //                }
 //                stopBackgroundThread()
 //            }
-//        }
-//    }
+        }
+    }
 
     private class ImageSaver(
         /**
@@ -313,7 +316,7 @@ class CameraController (private val context: Context){
             captureBuilder.set(CaptureRequest.TONEMAP_MODE, CaptureRequest.TONEMAP_MODE_CONTRAST_CURVE)
             captureBuilder.set(CaptureRequest.TONEMAP_CURVE,toneCurve())
             // exposure part
-            captureBuilder.set(CaptureRequest.SENSOR_SENSITIVITY, 695) // 695, 300:a50
+            captureBuilder.set(CaptureRequest.SENSOR_SENSITIVITY, 200) // 200, 300:a50
             captureBuilder.set(CaptureRequest.SENSOR_EXPOSURE_TIME, exp*1000)
             captureBuilder.set(CaptureRequest.JPEG_QUALITY, 100.toByte())
 
@@ -335,7 +338,7 @@ class CameraController (private val context: Context){
     private fun getOutputMediaFile(cnt: Int): File? {
         // To be safe, you should check that the SDCard is mounted
         // using Environment.getExternalStorageState() before doing this.
-        val mediaStorageDir = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), "OLED_FPM")
+        val mediaStorageDir = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), "FPM2020")
 
         // This location works best if you want the created images to be shared
         // between applications and persist after your app has been uninstalled.
