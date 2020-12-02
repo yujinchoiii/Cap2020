@@ -152,18 +152,8 @@ class CameraActivity : AppCompatActivity() {
     public override fun onResume() {
         super.onResume()
 
-        // front facing camera
+        // back facing camera
         initCamera()
-//        for (i in 0 until Camera.getNumberOfCameras()) {
-//            val info = Camera.CameraInfo()
-//            Camera.getCameraInfo(i, info)
-//            if (info.facing == Camera.CameraInfo.CAMERA_FACING_BACK) {
-//                CAM_ID = i
-//                break
-//            }
-//        }
-//        cameraController = CameraController(applicationContext)
-//        cameraController.openCamera()
     }
 
     private fun initCamera(){

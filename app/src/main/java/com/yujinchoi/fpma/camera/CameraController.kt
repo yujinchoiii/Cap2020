@@ -41,8 +41,6 @@ class CameraController (private val context: Context, private val imgCnt: Int){
     private var backgroundHandler: Handler? = null
     private var imageReader: ImageReader? = null
     private var file: File? = null
-
-    private val exposure: Long = 1
     private var timeStamp: String? = null
     private val mCameraOpenCloseLock = Semaphore(1)
 
@@ -260,7 +258,7 @@ class CameraController (private val context: Context, private val imgCnt: Int){
     private fun computeTemperature(): RggbChannelVector // use factor to get rggb
     {
 //            return new RggbChannelVector(0.635f + (0.0208333f * factor), 1.0f, 1.0f, 3.7420394f + (-0.0287829f * factor));
-        return RggbChannelVector(1.5f, 1.0f, 1.0f, 2.5f)
+        return RggbChannelVector(1.0f, 1.0f, 1.0f, 1.0f)
     }
 
     private fun transformer(): ColorSpaceTransform {
