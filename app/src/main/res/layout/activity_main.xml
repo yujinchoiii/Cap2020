@@ -34,9 +34,9 @@
     <ImageView
         android:id="@+id/view_img"
         android:layout_alignParentBottom="true"
-        android:layout_margin="50dp"
+        android:layout_marginBottom="50dp"
         android:layout_centerHorizontal="true"
-        android:layout_width="300dp"
-        android:layout_height="300dp"/>
+        android:layout_width="400dp"
+        android:layout_height="350dp"/>
 
 </RelativeLayout>
