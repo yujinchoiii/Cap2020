@@ -8,5 +8,7 @@ data class HoughCircle_xy(val center_x : Int?, val center_y : Int?, val radius :
 }
 
 data class HoughCircle_sin(val sin_x : Double?, val sin_y : Double?) {
-
+    override fun toString(): String {
+        return "HoughCircle_sin(sin_x=$sin_x, sin_y=$sin_y)"
+    }
 }
