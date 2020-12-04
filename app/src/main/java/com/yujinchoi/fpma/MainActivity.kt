@@ -15,6 +15,7 @@ import android.provider.MediaStore
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import com.yujinchoi.fpma.model.HoughCircle_sin
 import com.yujinchoi.fpma.model.HoughCircle_xy
 import kotlinx.android.synthetic.main.activity_main.*
 import org.opencv.android.OpenCVLoader
@@ -152,6 +153,43 @@ class MainActivity : AppCompatActivity() {
                 }
             }
 
+    }
+
+    fun posToSin(circle : HoughCircle_xy) : HoughCircle_sin {
+        var sin_x : Double? = null
+        var sin_y : Double? = null
+        if (circle.center_x in 145..155) {
+            sin_x = -0.119145221
+        } else if (circle.center_x in 225..245) {
+            sin_x = -0.079745222
+        } else if (circle.center_x in 295..350) {
+            sin_x = -0.039968038
+        } else if (circle.center_x in 390..420) {
+            sin_x = 0.0
+        } else if (circle.center_x in 470..510) {
+            sin_x = 0.039968038
+        } else if (circle.center_x in 575..585) {
+            sin_x = 0.079681907
+        } else if (circle.center_x in 640..680) {
+            sin_x = 0.119051369
+        }
+
+        if (circle.center_y in 80..100) {
+            sin_y = -0.119051369
+        } else if (circle.center_y in 160..180) {
+            sin_y = -0.079681907
+        } else if (circle.center_y in 240..260) {
+            sin_y = -0.039968038
+        } else if (circle.center_y in 330..350) {
+            sin_y = 0.0
+        } else if (circle.center_y in 420..450) {
+            sin_y = 0.039968038
+        } else if (circle.center_y in 510..530) {
+            sin_y = 0.079681907
+        } else if (circle.center_y in 590..610) {
+            sin_y = 0.119051369
+        }
+        return HoughCircle_sin(sin_x, sin_y)
     }
 
     private fun houghCircleDetection(data: Intent) {
