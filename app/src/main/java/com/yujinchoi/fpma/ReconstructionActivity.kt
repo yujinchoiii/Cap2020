@@ -204,6 +204,7 @@ class ReconstructionActivity : AppCompatActivity() {
 //    private var fileEnd : String ?= null
     private var ampFileName : String ?= null
     private var phaseFileName : String ?= null
+    private var orgFileName : String ?= null
 
     private var nStart = IntArray(2)
 
@@ -269,6 +270,7 @@ class ReconstructionActivity : AppCompatActivity() {
         val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.KOREAN).format(Date())
         ampFileName = timeStamp + "_amp.jpg"
         phaseFileName = timeStamp + "_phase.jpg"
+        orgFileName = timeStamp + "_before.jpg"
 
         // count number of images into nImg
         countNImg()
@@ -392,6 +394,7 @@ class ReconstructionActivity : AppCompatActivity() {
     private fun saveImage() {
         fileSaver.saveBmpImage(applicationContext, resultOBitmap!!, ampFileName)
         fileSaver.saveBmpImage(applicationContext, resultOBitmapAngle!!, phaseFileName)
+        fileSaver.saveBmpImage(applicationContext, orgOBitmap!!, orgFileName)
     }
 
     private fun showBefore() {
