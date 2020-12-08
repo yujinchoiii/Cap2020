@@ -41,10 +41,10 @@ class ReconstructionActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_reconstruction)
         permissions// permission checking
-        detectCircles()
 
         getPassedInfo() // passed information from CropImageActivity
         initUI() // initialize UI
+        detectCircles()
 
         initSettings() // settings (debugger, nImg and other things)
         startFullTask() // thread processing & reconstructing

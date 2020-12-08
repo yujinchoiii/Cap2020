@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".ReconstructionSettingActivity">
+    <RelativeLayout
+        android:id="@+id/layout1"
+        android:layout_marginTop="10dp"
+        android:paddingRight="40dp"
+        android:paddingLeft="40dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <EditText
+            android:id="@+id/editText_dP"
+            android:layout_margin="5dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ems="10"
+            android:hint="dP(default = 1)"
+            android:inputType="number" />
+        <EditText
+            android:id="@+id/editText_minDist"
+            android:layout_below="@id/editText_dP"
+            android:layout_margin="5dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ems="10"
+            android:hint="minDist(default = 30)"
+            android:inputType="number" />
+        <EditText
+            android:id="@+id/editText_param1"
+            android:layout_below="@id/editText_minDist"
+            android:layout_margin="5dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ems="10"
+            android:hint="param1(default = 30)"
+            android:inputType="number" />
+        <EditText
+            android:id="@+id/editText_param2"
+            android:layout_below="@id/editText_param1"
+            android:layout_margin="5dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ems="10"
+            android:hint="param2(default = 20)"
+            android:inputType="number" />
+        <EditText
+            android:id="@+id/editText_minR"
+            android:layout_below="@id/editText_param2"
+            android:layout_margin="5dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ems="10"
+            android:hint="minRadius(default = 175)"
+            android:inputType="number" />
+        <EditText
+            android:id="@+id/editText_maxR"
+            android:layout_below="@id/editText_minR"
+            android:layout_margin="5dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ems="10"
+            android:hint="maxRadius(default = 200)"
+            android:inputType="number" />
+    </RelativeLayout>
+    <ImageView
+        android:id="@+id/view_img"
+        android:layout_below="@id/layout1"
+        android:layout_marginTop="20dp"
+        android:layout_centerHorizontal="true"
+        android:layout_width="400dp"
+        android:layout_height="300dp"/>
+    <Button
+        android:id="@+id/btn_check"
+        android:layout_toStartOf="@id/btn_confirm"
+        android:layout_alignParentBottom="true"
+        android:layout_marginRight="40dp"
+        android:layout_marginBottom="20dp"
+        android:textColor="#ffffff"
+        android:background="@drawable/button_background"
+        android:layout_width="100dp"
+        android:layout_height="70dp"
+        android:text="CHECK" />
+    <Button
+        android:id="@+id/btn_confirm"
+        android:layout_alignParentRight="true"
+        android:layout_marginRight="40dp"
+        android:layout_marginBottom="20dp"
+        android:layout_alignParentBottom="true"
+        android:textColor="#ffffff"
+        android:background="@drawable/button_background"
+        android:layout_width="100dp"
+        android:layout_height="70dp"
+        android:text="CONFIRM" />
+    <ImageButton
+        android:id="@+id/back_button_rescset"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:scaleType="fitXY"
+        android:padding="5dp"
+        android:layout_alignParentBottom="true"
+        android:layout_margin="40dp"
+        android:background="@drawable/button_background"
+        android:src="@drawable/back_button"
+        android:textColor="@android:color/white"/>
+</RelativeLayout>

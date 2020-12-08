@@ -10,12 +10,10 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.os.Bundle
-import android.os.Environment
 import android.provider.MediaStore
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
-import com.yujinchoi.fpma.model.HoughCircle_sin
 import com.yujinchoi.fpma.model.HoughCircle_xy
 import kotlinx.android.synthetic.main.activity_main.*
 import org.opencv.android.OpenCVLoader
@@ -30,7 +28,6 @@ class MainActivity : AppCompatActivity() {
     private val TAG = "MainActivity"
     private val REQUEST_IMAGE_CAPTURE = 1
     private val REQUEST_PICK_IMAGE = 11
-    var exposure_time = 40000
 
     companion object { init { OpenCVLoader.initDebug() } }
 
@@ -59,27 +56,23 @@ class MainActivity : AppCompatActivity() {
     private fun initSettings() {
         permissions
         btn_reconstruct.setOnClickListener {
-            startReconstructionActivity()
+            goReconstructionSetting()
         }
         btn_takepic.setOnClickListener {
-            takePicture()
+            goCameraSetting()
         }
     }
 
-    private fun takePicture(){
-        if (editText_exp.text.isNotEmpty()) {
-            exposure_time = editText_exp.text.toString().toInt()
-        }
-        val intent = Intent(applicationContext, CameraActivity::class.java)
-        intent.putExtra("exposure_time", exposure_time)
+    private fun goCameraSetting(){
+        val intent = Intent(applicationContext, CameraSettingActivity::class.java)
         startActivity(intent)
-        finish()
+       // finish()
     }
 
-    private fun startReconstructionActivity() {
-        val intent = Intent(applicationContext, ReconstructionActivity::class.java)
+    private fun goReconstructionSetting() {
+        val intent = Intent(applicationContext, ReconstructionSettingActivity::class.java)
         startActivity(intent)
-        finish()
+       // finish()
     }
 
     private fun pickFromGallery() {
@@ -108,69 +101,5 @@ class MainActivity : AppCompatActivity() {
 //                    data?.let { houghCircleDetection(it) }
                 }
             }
-
-    }
-
-    private fun houghCircleDetection(data: Intent) {
-
-        data.clipData?.let {
-            for (i in 0 until it.itemCount ) {
-                var imgString = ""
-                val uri = it.getItemAt(i).uri
-                Log.d(TAG, "returned clipdata uri are ${uri}")
-                val filePathColumn = arrayOf(MediaStore.Images.Media.DATA)
-                val cursor: Cursor? = contentResolver.query(
-                    uri,
-                    filePathColumn, null, null, null
-                )
-                cursor!!.moveToFirst()
-                val columnIndex: Int = cursor.getColumnIndex(filePathColumn[0])
-                imgString = cursor.getString(columnIndex)
-                cursor.close()
-
-                val file = File(imgString)
-                val image = Imgcodecs.imread(file.absolutePath, Imgcodecs.IMREAD_COLOR)
-                Log.d(TAG, "returned image info is ${image}")
-                val colorImage = Mat(image.rows(), image.cols(), CvType.CV_32F)
-                Core.extractChannel(image, colorImage, 0)
-                var bitmap = Bitmap.createBitmap(
-                    colorImage.cols(),
-                    colorImage.rows(),
-                    Bitmap.Config.ARGB_8888
-                )
-                Utils.matToBitmap(colorImage, bitmap)
-                bitmap = android.media.ThumbnailUtils.extractThumbnail(bitmap, 400, 300)
-                val paddedBitmap = Bitmap.createBitmap(800, 700, Bitmap.Config.ARGB_8888)
-                val can = Canvas(paddedBitmap)
-                can.drawARGB(Color.BLACK, Color.BLACK, Color.BLACK, Color.BLACK) //black padding
-                can.drawBitmap(bitmap, 200.toFloat(), 200.toFloat(), Paint(Paint.FILTER_BITMAP_FLAG))
-//                    view_img.setImageBitmap(paddedBitmap)
-                Utils.bitmapToMat(paddedBitmap, colorImage)
-                Imgproc.cvtColor(colorImage, colorImage, Imgproc.COLOR_BGR2GRAY)
-                Imgproc.GaussianBlur(colorImage, colorImage, Size(1.0, 1.0), 0.0)
-                val circles = Mat()
-                Imgproc.HoughCircles(
-                    colorImage, circles, Imgproc.HOUGH_GRADIENT, 1.0, 30.0,
-                    30.0, 20.0, 180, 200
-                )
-                val detected = colorImage.clone()
-                var circle_Xy : HoughCircle_xy?
-                if (circles.cols() > 0) {
-                    Log.d(TAG, "detected circle info : ${circles.cols()}")
-                    for (x in 0 until circles.cols()) {
-                        val c1xyr = circles.get(0, x)
-                        circle_Xy = HoughCircle_xy(
-                            Math.round(c1xyr[0]).toInt(), Math.round(c1xyr[1]).toInt(), Math.round(
-                                c1xyr[2]
-                            ).toInt()
-                        )
-                        val xy = Point(circle_Xy.center_x!!.toDouble(), circle_Xy.center_y!!.toDouble())
-                        Log.d(TAG, "detected circle info : $xy , ${circle_Xy.radius}")
-                        Imgproc.circle(detected, xy, circle_Xy.radius!!, Scalar(0.0, 0.0, 255.0), 3)
-                    }
-                }
-                Utils.matToBitmap(colorImage, paddedBitmap)
-            }
-        }
     }
 }

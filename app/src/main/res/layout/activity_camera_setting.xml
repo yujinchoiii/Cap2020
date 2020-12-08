@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".CameraSettingActivity">
+    <RelativeLayout
+        android:layout_centerInParent="true"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <EditText
+            android:id="@+id/editText_exp"
+            android:layout_margin="20dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ems="10"
+            android:hint="exposure time(us)(default = 23000000)"
+            android:inputType="number" />
+        <ImageButton
+            android:id="@+id/btn_opencamera"
+            android:background="@drawable/button_background"
+            android:src="@drawable/ic_baseline_camera_alt_24"
+            android:padding="5dp"
+            android:scaleType="centerCrop"
+            android:layout_below="@id/editText_exp"
+            android:layout_centerHorizontal="true"
+            android:layout_width="70dp"
+            android:layout_height="70dp"/>
+    </RelativeLayout>
+    <ImageButton
+        android:id="@+id/back_button_camset"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:scaleType="fitXY"
+        android:padding="5dp"
+        android:layout_alignParentBottom="true"
+        android:layout_margin="20dp"
+        android:background="@drawable/button_background"
+        android:src="@drawable/back_button"
+        android:textColor="@android:color/white"/>
+
+</RelativeLayout>
