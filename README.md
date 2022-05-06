@@ -1,5 +1,5 @@
 # Cap2020
-## Android Application for 'Portable FPM Image Reconstruction'- Yonsei EEE Graduation Thesis
+## Android Application for 'Portable FPM Image Reconstruction'- Graduation Thesis
 ## Activity
 ### Main Activity
 #### -First page to select photography/reconstruction
