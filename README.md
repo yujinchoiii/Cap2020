@@ -1,5 +1,5 @@
 # Cap2020
-## Android Application for 'Portable FPM Image Reconstruction'- Graduation Thesis. 논문 파일 대용량으로 첨부 불가(yujincho@yonsei.ac.kr로 요청 시 전송해 드리겠습니다).
+## Android Application for 'Portable FPM Image Reconstruction'- Graduation Thesis. You can read our thesis here : https://docs.google.com/document/d/1kF33CFUUd1csZ3Kx70x3gbhUGHSpy9uM/edit?usp=sharing&ouid=113044937787413599214&rtpof=true&sd=true.
 ## Activity
 ### Main Activity
 #### -First page to select photography/reconstruction
