@@ -1,5 +1,5 @@
 # Cap2020
-## Android Application for 'Portable FPM Image Reconstruction'- Graduation Thesis. You can read our thesis here : https://docs.google.com/document/d/1kF33CFUUd1csZ3Kx70x3gbhUGHSpy9uM/edit?usp=sharing&ouid=113044937787413599214&rtpof=true&sd=true.
+## Android Application for 'Portable FPM Image Reconstruction'- Graduation Thesis.
 ## Activity
 ### Main Activity
 #### -First page to select photography/reconstruction
